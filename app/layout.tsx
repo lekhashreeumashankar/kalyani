@@ -15,8 +15,24 @@ const jakarta = Plus_Jakarta_Sans({
   display: 'swap',
 })
 
+const siteUrl = (() => {
+  if (process.env.NEXT_PUBLIC_SITE_URL) {
+    return process.env.NEXT_PUBLIC_SITE_URL
+  }
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
+    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+  }
+  if (process.env.VERCEL_BRANCH_URL) {
+    return `https://${process.env.VERCEL_BRANCH_URL}`
+  }
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`
+  }
+  return 'https://kalyani-tau.vercel.app'
+})()
+
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://kalyanistampings.com'),
+  metadataBase: new URL(siteUrl.startsWith('http') ? siteUrl : `https://${siteUrl}`),
   title: 'Kalyani Stampings | Precision in motion',
   description: 'Electrical laminations, motor stampings, and transformer cores made with precision from concept to completion.',
   generator: 'Next.js',
@@ -45,7 +61,10 @@ export const metadata: Metadata = {
     images: [
       {
         url: '/kalyani/logo_horizontal.png',
+        width: 1200,
+        height: 630,
         alt: 'Kalyani Stampings Logo',
+        type: 'image/png',
       },
     ],
   },
@@ -53,7 +72,14 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Kalyani Stampings | Precision in motion',
     description: 'Electrical laminations, motor stampings, and transformer cores made with precision from concept to completion.',
-    images: ['/kalyani/logo_horizontal.png'],
+    images: [
+      {
+        url: '/kalyani/logo_horizontal.png',
+        width: 1200,
+        height: 630,
+        alt: 'Kalyani Stampings Logo',
+      },
+    ],
   },
   icons: {
     icon: [
