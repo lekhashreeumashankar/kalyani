@@ -1,7 +1,8 @@
 'use client'
 
-import { FormEvent, TouchEvent, useEffect, useState } from 'react'
+import { FormEvent, TouchEvent, useEffect, useRef, useState } from 'react'
 import {
+  ArrowDown,
   ArrowDownRight,
   ArrowRight,
   Building2,
@@ -15,8 +16,84 @@ import {
   MoveUpRight,
   Phone,
   Send,
+  Sparkles,
   X,
 } from 'lucide-react'
+
+function useInView(threshold = 0.12) {
+  const ref = useRef<HTMLDivElement | null>(null)
+  const [isInView, setIsInView] = useState(false)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+
+    if (typeof window === 'undefined' || !('IntersectionObserver' in window)) {
+      setIsInView(true)
+      return
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsInView(true)
+          observer.unobserve(el)
+        }
+      },
+      {
+        threshold,
+        rootMargin: '0px 0px -30px 0px',
+      }
+    )
+
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [threshold])
+
+  return [ref, isInView] as const
+}
+
+function ScrollReveal({
+  children,
+  className = '',
+  delay = 0,
+  direction = 'up',
+}: {
+  children: React.ReactNode
+  className?: string
+  delay?: number
+  direction?: 'up' | 'down' | 'left' | 'right' | 'scale' | 'none'
+}) {
+  const [ref, isInView] = useInView()
+
+  const getTransform = () => {
+    if (isInView) return 'opacity-100 translate-x-0 translate-y-0 scale-100'
+    switch (direction) {
+      case 'up':
+        return 'opacity-0 translate-y-10'
+      case 'down':
+        return 'opacity-0 -translate-y-10'
+      case 'left':
+        return 'opacity-0 translate-x-10'
+      case 'right':
+        return 'opacity-0 -translate-x-10'
+      case 'scale':
+        return 'opacity-0 scale-95'
+      default:
+        return 'opacity-0'
+    }
+  }
+
+  return (
+    <div
+      ref={ref}
+      style={{ transitionDelay: `${delay}ms` }}
+      className={`transition-all duration-700 ease-out will-change-[transform,opacity] ${getTransform()} ${className}`}
+    >
+      {children}
+    </div>
+  )
+}
 
 const services = [
   {
@@ -204,7 +281,10 @@ export function KalyaniSite() {
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-cream text-ink antialiased">
-      <section id="home" className="relative isolate min-h-[680px] sm:min-h-[760px] overflow-hidden bg-ink">
+      <section
+        id="home"
+        className="relative isolate flex min-h-screen min-h-[100dvh] flex-col justify-between overflow-hidden bg-ink"
+      >
         {/* Background Factory / Plant Image */}
         <div className="absolute inset-0 -z-20 overflow-hidden">
           <img
@@ -217,7 +297,7 @@ export function KalyaniSite() {
         <div className="absolute inset-0 -z-10 bg-gradient-to-r from-[#251a14]/92 via-[#251a14]/70 to-black/35" />
         <div className="absolute inset-0 -z-10 bg-gradient-to-t from-[#251a14]/75 via-transparent to-black/45" />
 
-        <header className="mx-auto flex max-w-[1440px] items-center justify-between px-4 py-4 sm:px-6 sm:py-5 lg:px-12">
+        <header className="mx-auto flex w-full max-w-[1440px] items-center justify-between px-4 py-4 sm:px-6 sm:py-5 lg:px-12">
           <a
             href="#home"
             className="group flex items-center transition-transform duration-300 hover:scale-[1.02] focus:outline-none"
@@ -249,7 +329,7 @@ export function KalyaniSite() {
 
           <a
             href="#contact"
-            className="group hidden items-center gap-2.5 rounded-lg bg-orange px-4 py-2.5 text-[11px] font-bold uppercase tracking-[0.18em] text-ink shadow-sm transition-all duration-300 hover:bg-cream hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:scale-95 sm:inline-flex"
+            className="hover-shine group hidden items-center gap-2.5 rounded-lg bg-orange px-4 py-2.5 text-[11px] font-bold uppercase tracking-[0.18em] text-ink shadow-sm transition-all duration-300 hover:bg-cream hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:scale-95 sm:inline-flex"
           >
             Start a conversation
             <ArrowDownRight className="size-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:translate-y-0.5" aria-hidden="true" />
@@ -340,105 +420,163 @@ export function KalyaniSite() {
           </nav>
         )}
 
-        <div className="mx-auto flex max-w-[1440px] flex-col justify-center px-4 pb-20 pt-16 sm:px-6 sm:pb-28 sm:pt-20 lg:min-h-[640px] lg:px-12 lg:pb-32 lg:pt-28">
+        <div className="mx-auto my-auto flex w-full max-w-[1440px] flex-col justify-center px-4 py-6 sm:px-6 sm:py-8 lg:px-12">
           <div className="max-w-3xl animate-fade-in-up">
-            <p className="mb-6 sm:mb-8 flex items-center gap-3 text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.24em] sm:tracking-[0.3em] text-orange">
-              <span className="h-px w-8 sm:w-12 bg-orange" /> Precision manufacturing / Since 2011
+            <p className="mb-4 sm:mb-6 flex items-center gap-3 text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.24em] sm:tracking-[0.3em] text-orange">
+              <span className="relative flex size-2.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-orange opacity-75" />
+                <span className="relative inline-flex size-2.5 rounded-full bg-orange" />
+              </span>
+              <span className="h-px w-6 sm:w-10 bg-orange/60" /> Precision manufacturing / Since 2011
             </p>
-            <h1 className="max-w-4xl font-display text-4xl sm:text-6xl md:text-7xl lg:text-[8.5rem] leading-[0.95] sm:leading-[0.93] tracking-[-0.03em] sm:tracking-[-0.04em] text-cream">
+            <h1 className="max-w-4xl font-display text-4xl sm:text-6xl md:text-7xl lg:text-[7.5rem] xl:text-[8.5rem] leading-[0.95] sm:leading-[0.93] tracking-[-0.03em] sm:tracking-[-0.04em] text-cream">
               The force behind <em className="text-orange not-italic">what moves</em> forward.
             </h1>
-            <p className="mt-6 sm:mt-9 max-w-xl text-sm leading-relaxed text-cream/75 sm:text-lg sm:leading-7">
+            <p className="mt-5 sm:mt-7 max-w-xl text-sm leading-relaxed text-cream/75 sm:text-lg sm:leading-7">
               Electrical laminations, motor stampings, and transformer cores shaped with the discipline of a trusted engineering partner.
             </p>
-            <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-5">
+            <div className="mt-7 sm:mt-9 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-5">
               <a
                 href="#capabilities"
-                className="group inline-flex items-center justify-center gap-3 rounded-lg bg-orange px-6 py-4 text-[11px] font-bold uppercase tracking-[0.2em] text-ink shadow-sm transition-all duration-300 hover:bg-cream hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]"
+                className="hover-shine group relative inline-flex items-center justify-center gap-3 overflow-hidden rounded-lg bg-orange px-6 py-4 text-[11px] font-bold uppercase tracking-[0.2em] text-ink shadow-lg shadow-orange/20 transition-all duration-300 hover:bg-cream hover:shadow-xl hover:shadow-orange/30 hover:-translate-y-1 hover:scale-[1.02] active:translate-y-0 active:scale-95"
               >
                 Explore capabilities
-                <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-1" aria-hidden="true" />
+                <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-1.5" aria-hidden="true" />
               </a>
               <a
                 href="#about"
-                className="group inline-flex items-center justify-center sm:justify-start gap-2 py-3 sm:py-2 text-[11px] font-bold uppercase tracking-[0.2em] text-cream/70 transition-all duration-200 hover:text-orange"
+                className="group inline-flex items-center justify-center sm:justify-start gap-2 py-3 sm:py-2 text-[11px] font-bold uppercase tracking-[0.2em] text-cream/75 transition-all duration-300 hover:text-orange hover:translate-x-1"
               >
                 Our approach
-                <ChevronRight className="size-4 text-orange transition-transform duration-200 group-hover:translate-x-1" aria-hidden="true" />
+                <ChevronRight className="size-4 text-orange transition-transform duration-300 group-hover:translate-x-1.5" aria-hidden="true" />
               </a>
             </div>
+          </div>
+        </div>
+
+        {/* Responsive Hero Bottom Bar with Scroll Indicator */}
+        <div className="mx-auto flex w-full max-w-[1440px] items-center justify-between px-4 pb-5 pt-2 sm:px-6 sm:pb-8 lg:px-12">
+          <div className="hidden items-center gap-3 font-mono text-[10px] uppercase tracking-widest text-cream/45 sm:flex">
+            <span>Chennai, India</span>
+            <span className="size-1 rounded-full bg-orange/60" />
+            <span>IATF 16949:2016 Certified</span>
+          </div>
+
+          <a
+            href="#about"
+            className="group mx-auto sm:mx-0 inline-flex items-center gap-2 rounded-full border border-cream/15 bg-white/5 px-4 py-2 text-[10px] font-bold uppercase tracking-[0.22em] text-cream/70 backdrop-blur-sm transition-all duration-300 hover:border-orange/50 hover:bg-orange/15 hover:text-cream hover:scale-105"
+            aria-label="Scroll down to explore"
+          >
+            <span>Scroll down</span>
+            <ArrowDown className="size-3.5 text-orange animate-bounce-subtle transition-transform duration-300 group-hover:translate-y-0.5" />
+          </a>
+
+          <div className="hidden font-mono text-[10px] uppercase tracking-widest text-cream/45 lg:block">
+            Est. 2011 • Press &amp; Sub-Assembly
           </div>
         </div>
       </section>
 
       <section id="about" className="bg-cream px-4 py-16 sm:px-6 sm:py-24 lg:px-12 lg:py-36">
-        <div className="mx-auto grid max-w-[1240px] gap-10 sm:gap-14 lg:grid-cols-[0.84fr_1fr] lg:gap-24">
-          <div>
-            <p className="mb-4 sm:mb-6 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.28em] text-orange">The Company</p>
-            <h2 className="max-w-xl font-display text-3xl leading-[1] tracking-[-0.03em] text-ink sm:text-5xl sm:leading-[0.96] sm:tracking-[-0.04em] lg:text-7xl">
-              From concept <em className="text-orange not-italic">to completion.</em>
-            </h2>
-            <div className="mt-8 sm:mt-12 flex items-start gap-4 border-t border-ink/20 pt-5">
-              <span className="mt-1 size-2 shrink-0 bg-orange" />
-              <p className="max-w-xs text-[10px] sm:text-[11px] font-bold uppercase leading-5 tracking-[0.2em] text-ink/60">Trust is the tolerance that holds everything together.</p>
+        <div className="mx-auto max-w-[1240px]">
+          <div className="grid gap-10 sm:gap-14 lg:grid-cols-[0.84fr_1fr] lg:gap-24">
+            <ScrollReveal direction="left" delay={50}>
+              <p className="mb-4 sm:mb-6 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.28em] text-orange">The Company</p>
+              <h2 className="max-w-xl font-display text-3xl leading-[1] tracking-[-0.03em] text-ink sm:text-5xl sm:leading-[0.96] sm:tracking-[-0.04em] lg:text-7xl">
+                From concept <em className="text-orange not-italic">to completion.</em>
+              </h2>
+              <div className="mt-8 sm:mt-12 flex items-start gap-4 border-t border-ink/20 pt-5">
+                <span className="mt-1 size-2 shrink-0 bg-orange" />
+                <p className="max-w-xs text-[10px] sm:text-[11px] font-bold uppercase leading-5 tracking-[0.2em] text-ink/60">Trust is the tolerance that holds everything together.</p>
+              </div>
+            </ScrollReveal>
+
+            <ScrollReveal direction="right" delay={150} className="max-w-2xl">
+              <p className="text-lg leading-relaxed text-ink sm:text-2xl sm:leading-9">
+                Kalyani Stampings Private Limited is an IATF-16949:2016 certified manufacturing company established in 2011 — serving the growing needs of automotive and general engineering industries in India and abroad.
+              </p>
+              <p className="mt-5 sm:mt-7 max-w-xl text-xs sm:text-sm leading-relaxed text-ink/75 sm:leading-7">
+                Located near Oragadam SIPCOT in Chennai, our campus is surrounded by automotive leaders including Nissan, Ford, Hyundai, TVS, Daimler, and BMW. We move with the customer drawing: designing tools, then producing pressed, fabricated, machined, and assembly components with one accountable team.
+              </p>
+              <a
+                href="#contact"
+                className="group mt-8 sm:mt-10 inline-flex items-center gap-3 border-b-2 border-orange pb-2 text-[11px] font-bold uppercase tracking-[0.2em] text-ink transition-all duration-300 hover:text-orange hover:border-ink hover:translate-x-1"
+              >
+                Work with Kalyani
+                <MoveUpRight className="size-4 text-orange transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-1" aria-hidden="true" />
+              </a>
+            </ScrollReveal>
+          </div>
+
+          {/* Interactive Metric Highlight Strip */}
+          <ScrollReveal direction="up" delay={200} className="mt-14 sm:mt-20 pt-10 border-t border-ink/15">
+            <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
+              <div className="group rounded-xl border border-ink/10 bg-white/60 p-5 backdrop-blur-sm transition-all duration-300 hover:border-orange hover:bg-white hover:-translate-y-1.5 hover:shadow-xl hover:shadow-orange/10">
+                <span className="font-mono text-2xl font-bold text-orange sm:text-3xl">2011</span>
+                <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-ink/80">Year Founded</p>
+                <p className="mt-1 text-[11px] text-ink/60">Over a decade of precision tooling</p>
+              </div>
+              <div className="group rounded-xl border border-ink/10 bg-white/60 p-5 backdrop-blur-sm transition-all duration-300 hover:border-orange hover:bg-white hover:-translate-y-1.5 hover:shadow-xl hover:shadow-orange/10">
+                <span className="font-mono text-2xl font-bold text-orange sm:text-3xl">57,500</span>
+                <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-ink/80">Sq. Ft. Campus</p>
+                <p className="mt-1 text-[11px] text-ink/60">32,000 sq. ft. built-up Chennai plant</p>
+              </div>
+              <div className="group rounded-xl border border-ink/10 bg-white/60 p-5 backdrop-blur-sm transition-all duration-300 hover:border-orange hover:bg-white hover:-translate-y-1.5 hover:shadow-xl hover:shadow-orange/10">
+                <span className="font-mono text-2xl font-bold text-orange sm:text-3xl">IATF 16949</span>
+                <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-ink/80">Certified</p>
+                <p className="mt-1 text-[11px] text-ink/60">Automotive global quality standard</p>
+              </div>
+              <div className="group rounded-xl border border-ink/10 bg-white/60 p-5 backdrop-blur-sm transition-all duration-300 hover:border-orange hover:bg-white hover:-translate-y-1.5 hover:shadow-xl hover:shadow-orange/10">
+                <span className="font-mono text-2xl font-bold text-orange sm:text-3xl">12+</span>
+                <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-ink/80">Part Families</p>
+                <p className="mt-1 text-[11px] text-ink/60">From laminations to welded assemblies</p>
+              </div>
             </div>
-          </div>
-          <div className="max-w-2xl">
-            <p className="text-lg leading-relaxed text-ink sm:text-2xl sm:leading-9">
-              Kalyani Stampings Private Limited is an IATF-16949:2016 certified manufacturing company established in 2011 — serving the growing needs of automotive and general engineering industries in India and abroad.
-            </p>
-            <p className="mt-5 sm:mt-7 max-w-xl text-xs sm:text-sm leading-relaxed text-ink/75 sm:leading-7">
-              Located near Oragadam SIPCOT in Chennai, our campus is surrounded by automotive leaders including Nissan, Ford, Hyundai, TVS, Daimler, and BMW. We move with the customer drawing: designing tools, then producing pressed, fabricated, machined, and assembly components with one accountable team.
-            </p>
-            <a
-              href="#contact"
-              className="group mt-8 sm:mt-10 inline-flex items-center gap-3 border-b-2 border-orange pb-2 text-[11px] font-bold uppercase tracking-[0.2em] text-ink transition-all duration-200 hover:text-orange hover:border-ink"
-            >
-              Work with Kalyani
-              <MoveUpRight className="size-4 text-orange transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" aria-hidden="true" />
-            </a>
-          </div>
+          </ScrollReveal>
         </div>
       </section>
 
       <section id="capabilities" className="bg-[#403d39] px-4 py-16 text-cream sm:px-6 sm:py-20 lg:px-12 lg:py-28">
         <div className="mx-auto max-w-[1240px]">
-          <div className="flex flex-col justify-between gap-6 border-b border-cream/20 pb-8 sm:flex-row sm:items-end">
-            <div>
-              <p className="mb-3 sm:mb-4 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.28em] text-orange">Capabilities</p>
-              <h2 className="max-w-2xl font-display text-3xl leading-[1] tracking-[-0.03em] sm:text-5xl sm:leading-[0.96] sm:tracking-[-0.04em] lg:text-6xl">
-                Parts that become <em className="text-orange not-italic">progress.</em>
-              </h2>
+          <ScrollReveal direction="up">
+            <div className="flex flex-col justify-between gap-6 border-b border-cream/20 pb-8 sm:flex-row sm:items-end">
+              <div>
+                <p className="mb-3 sm:mb-4 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.28em] text-orange">Capabilities</p>
+                <h2 className="max-w-2xl font-display text-3xl leading-[1] tracking-[-0.03em] sm:text-5xl sm:leading-[0.96] sm:tracking-[-0.04em] lg:text-6xl">
+                  Parts that become <em className="text-orange not-italic">progress.</em>
+                </h2>
+              </div>
+              <p className="max-w-xs text-xs sm:text-sm leading-relaxed text-cream/70 sm:leading-6">
+                A focused manufacturing partner for components that live inside the world&apos;s most important machines.
+              </p>
             </div>
-            <p className="max-w-xs text-xs sm:text-sm leading-relaxed text-cream/70 sm:leading-6">
-              A focused manufacturing partner for components that live inside the world&apos;s most important machines.
-            </p>
-          </div>
+          </ScrollReveal>
 
-          <div className="grid gap-px bg-cream/20 lg:grid-cols-3">
-            {services.map((service) => (
-              <article
-                key={service.title}
-                className="group relative flex flex-col justify-between bg-[#403d39] p-6 transition-all duration-300 hover:bg-orange hover:text-ink hover:-translate-y-1 hover:shadow-2xl hover:shadow-orange/10 active:bg-orange active:text-ink sm:p-8"
-              >
-                <div className="flex items-center justify-between border-b border-cream/15 pb-4 transition-colors duration-300 group-hover:border-ink/20">
-                  <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-orange transition-colors duration-300 group-hover:text-ink">
-                    {service.detail}
-                  </span>
-                  <ArrowDownRight
-                    className="size-4 text-cream/50 transition-all duration-300 group-hover:translate-x-1 group-hover:translate-y-1 group-hover:text-ink"
-                    aria-hidden="true"
-                  />
-                </div>
-                <div className="mt-5">
-                  <h3 className="font-display text-2xl tracking-[-0.03em] sm:text-3xl transition-colors duration-300">
-                    {service.title}
-                  </h3>
-                  <p className="mt-3 text-xs leading-relaxed text-cream/70 transition-colors duration-300 group-hover:text-ink/85 sm:text-sm">
-                    {service.description}
-                  </p>
-                </div>
-              </article>
+          <div className="mt-8 grid gap-4 sm:gap-6 lg:grid-cols-3">
+            {services.map((service, idx) => (
+              <ScrollReveal direction="up" delay={idx * 140} key={service.title} className="h-full">
+                <article
+                  className="group relative flex h-full flex-col justify-between rounded-xl border border-cream/10 bg-[#313638] p-6 transition-all duration-300 hover:border-orange/60 hover:bg-orange hover:text-ink hover:-translate-y-2.5 hover:scale-[1.01] hover:shadow-2xl hover:shadow-orange/30 active:bg-orange active:text-ink sm:p-8"
+                >
+                  <div className="flex items-center justify-between border-b border-cream/15 pb-4 transition-colors duration-300 group-hover:border-ink/20">
+                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-orange transition-colors duration-300 group-hover:text-ink">
+                      {service.detail}
+                    </span>
+                    <ArrowDownRight
+                      className="size-4 text-cream/50 transition-all duration-300 group-hover:translate-x-1.5 group-hover:translate-y-1.5 group-hover:text-ink"
+                      aria-hidden="true"
+                    />
+                  </div>
+                  <div className="mt-5">
+                    <h3 className="font-display text-2xl tracking-[-0.03em] sm:text-3xl transition-colors duration-300">
+                      {service.title}
+                    </h3>
+                    <p className="mt-3 text-xs leading-relaxed text-cream/70 transition-colors duration-300 group-hover:text-ink/85 sm:text-sm">
+                      {service.description}
+                    </p>
+                  </div>
+                </article>
+              </ScrollReveal>
             ))}
           </div>
         </div>
@@ -447,356 +585,366 @@ export function KalyaniSite() {
       <section id="facilities" className="bg-[#2b2825] px-4 py-16 text-cream sm:px-6 sm:py-24 lg:px-12 lg:py-36">
         <div className="mx-auto max-w-[1320px]">
           {/* Section Header */}
-          <div className="grid gap-6 sm:gap-8 border-b border-cream/15 pb-8 sm:pb-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
-            <div>
-              <p className="mb-3 sm:mb-4 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.28em] text-orange">
-                Infrastructure &amp; Manufacturing
-              </p>
-              <h2 className="font-display text-3xl leading-[1] tracking-[-0.03em] text-cream sm:text-5xl sm:leading-[0.95] lg:text-7xl">
-                A floor engineered for <em className="text-orange not-italic">high-precision output.</em>
-              </h2>
-            </div>
-            <div className="space-y-4 text-xs sm:text-sm leading-relaxed text-cream/75 lg:pl-10">
-              <p>
-                Our 57,500 sq. ft. campus (32,000 sq. ft. built-up) in Chennai&apos;s automotive manufacturing belt operates comprehensive stamping lines, specialized SPM welding, VMC machining, and an in-house SolidWorks tool design facility.
-              </p>
-              <div className="flex flex-wrap gap-2.5 sm:gap-4 text-xs font-semibold uppercase tracking-wider text-orange">
-                <span>Mechanical &amp; Hydraulic Presses</span>
-                <span className="text-cream/30">·</span>
-                <span>Robotic &amp; SPM CO2 Welding</span>
-                <span className="text-cream/30">·</span>
-                <span>VMC &amp; CNC Turning</span>
+          <ScrollReveal direction="up">
+            <div className="grid gap-6 sm:gap-8 border-b border-cream/15 pb-8 sm:pb-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
+              <div>
+                <p className="mb-3 sm:mb-4 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.28em] text-orange">
+                  Infrastructure &amp; Manufacturing
+                </p>
+                <h2 className="font-display text-3xl leading-[1] tracking-[-0.03em] text-cream sm:text-5xl sm:leading-[0.95] lg:text-7xl">
+                  A floor engineered for <em className="text-orange not-italic">high-precision output.</em>
+                </h2>
+              </div>
+              <div className="space-y-4 text-xs sm:text-sm leading-relaxed text-cream/75 lg:pl-10">
+                <p>
+                  Our 57,500 sq. ft. campus (32,000 sq. ft. built-up) in Chennai&apos;s automotive manufacturing belt operates comprehensive stamping lines, specialized SPM welding, VMC machining, and an in-house SolidWorks tool design facility.
+                </p>
+                <div className="flex flex-wrap gap-2.5 sm:gap-4 text-xs font-semibold uppercase tracking-wider text-orange">
+                  <span>Mechanical &amp; Hydraulic Presses</span>
+                  <span className="text-cream/30">·</span>
+                  <span>Robotic &amp; SPM CO2 Welding</span>
+                  <span className="text-cream/30">·</span>
+                  <span>VMC &amp; CNC Turning</span>
+                </div>
               </div>
             </div>
-          </div>
+          </ScrollReveal>
 
           {/* ========================================================================= */}
           {/* THE PRODUCT NAVIGATION SHOWCASE WITH SWIPE & CHIP SELECTOR */}
           {/* ========================================================================= */}
-          <div className="mt-12 sm:mt-20 rounded-2xl border border-cream/20 bg-gradient-to-b from-white/[0.07] to-white/[0.02] p-4 sm:p-8 lg:p-12">
-            {/* Header with Navigation Controls */}
-            <div className="flex flex-col justify-between gap-6 border-b border-cream/15 pb-6 sm:pb-8 sm:flex-row sm:items-end">
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-[0.26em] text-orange">
-                  Manufactured Components
-                </span>
-                <h3 className="mt-2 font-display text-2xl text-cream sm:text-4xl lg:text-5xl">
-                  Pressed parts &amp; assemblies in motion.
-                </h3>
-                <p className="mt-2 max-w-xl text-xs text-cream/70 sm:text-sm">
-                  Browse through parts manufactured across our press lines. Swipe on mobile, use arrows, or select a component.
-                </p>
-              </div>
-
-              {/* Arrow Navigation Controls */}
-              <div className="flex items-center justify-between sm:justify-end gap-4">
-                <span className="font-mono text-xs font-semibold tracking-wider text-cream/60">
-                  <strong className="text-orange">{String(activeProduct + 1).padStart(2, '0')}</strong> / {String(products.length).padStart(2, '0')}
-                </span>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={prevProduct}
-                    className="grid size-10 sm:size-11 place-items-center rounded-lg border border-cream/25 bg-white/5 text-cream transition-all duration-200 hover:border-orange hover:bg-orange hover:text-ink active:scale-95"
-                    aria-label="Previous manufactured product"
-                  >
-                    <ChevronLeft className="size-5" />
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={nextProduct}
-                    className="grid size-10 sm:size-11 place-items-center rounded-lg border border-cream/25 bg-white/5 text-cream transition-all duration-200 hover:border-orange hover:bg-orange hover:text-ink active:scale-95"
-                    aria-label="Next manufactured product"
-                  >
-                    <ChevronRight className="size-5" />
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Mobile Horizontal Scrollable Chip Strip */}
-            <div className="mt-5 flex items-center gap-2 overflow-x-auto pb-2 pt-1 no-scrollbar sm:hidden" role="tablist" aria-label="Component selector">
-              {products.map((p, idx) => (
-                <button
-                  key={p.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={activeProduct === idx}
-                  onClick={() => setActiveProduct(idx)}
-                  className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold tracking-wider transition-all duration-200 active:scale-95 ${
-                    activeProduct === idx
-                      ? 'bg-orange text-ink font-bold shadow-md'
-                      : 'bg-white/5 text-cream/70 border border-cream/15 hover:border-orange/50 hover:text-cream'
-                  }`}
-                >
-                  <span className="font-mono text-[10px]">{p.id}</span>
-                  <span className="max-w-[110px] truncate">{p.name.split(' ')[0]}</span>
-                </button>
-              ))}
-            </div>
-
-            {/* Featured Active Product Viewer with Touch Gestures */}
-            <div
-              key={products[activeProduct].id}
-              className="mt-6 sm:mt-8 grid gap-6 sm:gap-8 rounded-xl border border-cream/10 bg-black/30 p-4 sm:p-8 lg:grid-cols-[1.1fr_1fr] lg:gap-12 lg:p-10 select-none animate-fade-in"
-              onTouchStart={handleTouchStart}
-              onTouchMove={handleTouchMove}
-              onTouchEnd={handleTouchEnd}
-            >
-              {/* Product Visual Showcase */}
-              <div className="relative flex min-h-[220px] sm:min-h-[340px] items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-cream/10 via-white/5 to-transparent p-6 sm:p-8">
-                <div className="absolute size-48 rounded-full bg-orange/15 blur-3xl animate-subtle-pulse" />
-                <img
-                  src={products[activeProduct].image}
-                  alt={products[activeProduct].name}
-                  className="relative z-10 max-h-48 sm:max-h-64 w-auto max-w-[85%] object-contain drop-shadow-[0_20px_35px_rgba(0,0,0,0.6)] transition-transform duration-500 hover:scale-105"
-                />
-                <span className="absolute bottom-3 left-4 font-mono text-[10px] tracking-widest text-cream/40">
-                  COMPONENT {products[activeProduct].id}
-                </span>
-                <span className="absolute bottom-3 right-4 rounded-full bg-black/40 px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider text-orange sm:hidden">
-                  Swipe ← →
-                </span>
-              </div>
-
-              {/* Technical Specifications */}
-              <div className="flex flex-col justify-between">
+          <ScrollReveal direction="up" delay={150}>
+            <div className="mt-12 sm:mt-20 rounded-2xl border border-cream/20 bg-gradient-to-b from-white/[0.07] to-white/[0.02] p-4 sm:p-8 lg:p-12">
+              {/* Header with Navigation Controls */}
+              <div className="flex flex-col justify-between gap-6 border-b border-cream/15 pb-6 sm:pb-8 sm:flex-row sm:items-end">
                 <div>
-                  <span className="inline-block rounded-full bg-orange/20 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-orange">
-                    {products[activeProduct].category}
+                  <span className="text-[10px] font-bold uppercase tracking-[0.26em] text-orange">
+                    Manufactured Components
                   </span>
-                  <h4 className="mt-3 sm:mt-4 font-display text-2xl text-cream sm:text-4xl">
-                    {products[activeProduct].name}
-                  </h4>
-                  <p className="mt-3 text-xs leading-relaxed text-cream/75 sm:text-sm">
-                    {products[activeProduct].spec}
+                  <h3 className="mt-2 font-display text-2xl text-cream sm:text-4xl lg:text-5xl">
+                    Pressed parts &amp; assemblies in motion.
+                  </h3>
+                  <p className="mt-2 max-w-xl text-xs text-cream/70 sm:text-sm">
+                    Browse through parts manufactured across our press lines. Swipe on mobile, use arrows, or select a component.
                   </p>
+                </div>
 
-                  <div className="mt-5 sm:mt-6 space-y-3 rounded-lg border border-cream/10 bg-white/5 p-4 text-xs">
-                    <div className="flex justify-between border-b border-cream/10 pb-2">
-                      <span className="font-semibold uppercase tracking-wider text-cream/50">Press Line</span>
-                      <span className="font-medium text-cream text-right">{products[activeProduct].process}</span>
-                    </div>
-                    <div className="flex justify-between pt-1">
-                      <span className="font-semibold uppercase tracking-wider text-cream/50">Material Grade</span>
-                      <span className="font-medium text-orange text-right">{products[activeProduct].material}</span>
-                    </div>
+                {/* Arrow Navigation Controls */}
+                <div className="flex items-center justify-between sm:justify-end gap-4">
+                  <span className="font-mono text-xs font-semibold tracking-wider text-cream/60">
+                    <strong className="text-orange">{String(activeProduct + 1).padStart(2, '0')}</strong> / {String(products.length).padStart(2, '0')}
+                  </span>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={prevProduct}
+                      className="grid size-10 sm:size-11 place-items-center rounded-lg border border-cream/25 bg-white/5 text-cream transition-all duration-200 hover:border-orange hover:bg-orange hover:text-ink active:scale-95"
+                      aria-label="Previous manufactured product"
+                    >
+                      <ChevronLeft className="size-5" />
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={nextProduct}
+                      className="grid size-10 sm:size-11 place-items-center rounded-lg border border-cream/25 bg-white/5 text-cream transition-all duration-200 hover:border-orange hover:bg-orange hover:text-ink active:scale-95"
+                      aria-label="Next manufactured product"
+                    >
+                      <ChevronRight className="size-5" />
+                    </button>
                   </div>
                 </div>
+              </div>
 
-                <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row items-stretch sm:items-center gap-4 border-t border-cream/10 pt-6">
-                  <a
-                    href="#contact"
-                    className="group inline-flex items-center justify-center gap-2.5 rounded-lg bg-orange px-6 py-3.5 text-xs font-bold uppercase tracking-[0.18em] text-ink shadow-md transition-all duration-300 hover:bg-cream hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 active:scale-95"
+              {/* Interactive Component Selector (Swipeable on mobile, wraps on tablet & desktop) */}
+              <div className="mt-5 flex items-center gap-2 overflow-x-auto pb-2 pt-1 no-scrollbar sm:flex-wrap" role="tablist" aria-label="Component selector">
+                {products.map((p, idx) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={activeProduct === idx}
+                    onClick={() => setActiveProduct(idx)}
+                    className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold tracking-wider transition-all duration-200 active:scale-95 ${
+                      activeProduct === idx
+                        ? 'bg-orange text-ink font-bold shadow-md scale-105 ring-2 ring-orange/40'
+                        : 'bg-white/5 text-cream/70 border border-cream/15 hover:border-orange/50 hover:text-cream hover:scale-102'
+                    }`}
                   >
-                    Enquire About This Part
-                    <ArrowRight className="size-4 transition-transform duration-200 group-hover:translate-x-1" />
-                  </a>
+                    <span className="font-mono text-[10px]">{p.id}</span>
+                    <span className="max-w-[120px] truncate">{p.name.split(' ')[0]}</span>
+                  </button>
+                ))}
+              </div>
 
-                  <span className="text-center sm:text-left text-xs text-cream/50">
-                    Custom dies &amp; tooling built to CAD drawing
+              {/* Featured Active Product Viewer with Touch Gestures & Motion */}
+              <div
+                key={products[activeProduct].id}
+                className="mt-6 sm:mt-8 grid gap-6 sm:gap-8 rounded-xl border border-cream/15 bg-black/30 p-4 sm:p-8 lg:grid-cols-[1.1fr_1fr] lg:gap-12 lg:p-10 select-none animate-scale-in"
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+              >
+                {/* Product Visual Showcase with Living Motion */}
+                <div className="relative flex min-h-[220px] sm:min-h-[340px] items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-cream/10 via-white/5 to-transparent p-6 sm:p-8">
+                  <div className="absolute size-52 sm:size-64 rounded-full bg-orange/20 blur-3xl animate-subtle-pulse" />
+                  <img
+                    src={products[activeProduct].image}
+                    alt={products[activeProduct].name}
+                    className="relative z-10 max-h-48 sm:max-h-64 w-auto max-w-[85%] object-contain drop-shadow-[0_20px_35px_rgba(0,0,0,0.6)] animate-subtle-float transition-all duration-500 hover:scale-110"
+                  />
+                  <span className="absolute bottom-3 left-4 font-mono text-[10px] tracking-widest text-cream/40">
+                    COMPONENT {products[activeProduct].id}
+                  </span>
+                  <span className="absolute bottom-3 right-4 rounded-full bg-black/40 px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider text-orange sm:hidden">
+                    Swipe ← →
                   </span>
                 </div>
-              </div>
-            </div>
 
-          </div>
+                {/* Technical Specifications */}
+                <div className="flex flex-col justify-between">
+                  <div>
+                    <span className="inline-block rounded-full bg-orange/20 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-orange">
+                      {products[activeProduct].category}
+                    </span>
+                    <h4 className="mt-3 sm:mt-4 font-display text-2xl text-cream sm:text-4xl">
+                      {products[activeProduct].name}
+                    </h4>
+                    <p className="mt-3 text-xs leading-relaxed text-cream/75 sm:text-sm">
+                      {products[activeProduct].spec}
+                    </p>
+
+                    <div className="mt-5 sm:mt-6 space-y-3 rounded-lg border border-cream/10 bg-white/5 p-4 text-xs">
+                      <div className="flex justify-between border-b border-cream/10 pb-2">
+                        <span className="font-semibold uppercase tracking-wider text-cream/50">Press Line</span>
+                        <span className="font-medium text-cream text-right">{products[activeProduct].process}</span>
+                      </div>
+                      <div className="flex justify-between pt-1">
+                        <span className="font-semibold uppercase tracking-wider text-cream/50">Material Grade</span>
+                        <span className="font-medium text-orange text-right">{products[activeProduct].material}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row items-stretch sm:items-center gap-4 border-t border-cream/10 pt-6">
+                    <a
+                      href="#contact"
+                      className="hover-shine group inline-flex items-center justify-center gap-2.5 rounded-lg bg-orange px-6 py-3.5 text-xs font-bold uppercase tracking-[0.18em] text-ink shadow-md transition-all duration-300 hover:bg-cream hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 active:scale-95"
+                    >
+                      Enquire About This Part
+                      <ArrowRight className="size-4 transition-transform duration-200 group-hover:translate-x-1" />
+                    </a>
+
+                    <span className="text-center sm:text-left text-xs text-cream/50">
+                      Custom dies &amp; tooling built to CAD drawing
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </ScrollReveal>
         </div>
       </section>
 
       <section id="contact" className="bg-cream px-4 py-16 sm:px-6 sm:py-24 lg:px-12 lg:py-36">
         <div className="mx-auto grid max-w-[1240px] gap-12 lg:grid-cols-[0.8fr_1fr] lg:gap-28">
-          <div>
-            <p className="mb-4 sm:mb-6 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.28em] text-orange">Start a conversation</p>
-            <h2 className="max-w-xl font-display text-3xl leading-[1] tracking-[-0.03em] text-ink sm:text-5xl sm:leading-[0.95] sm:tracking-[-0.04em] lg:text-7xl">
-              Let&apos;s make the next part <em className="text-orange not-italic">matter.</em>
-            </h2>
-            <p className="mt-5 sm:mt-8 max-w-md text-xs sm:text-sm leading-relaxed text-ink/70 sm:leading-7">
-              Tell us what you are building. Our team will get back to you with the right next step.
-            </p>
-          </div>
+          <ScrollReveal direction="left">
+            <div>
+              <p className="mb-4 sm:mb-6 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.28em] text-orange">Start a conversation</p>
+              <h2 className="max-w-xl font-display text-3xl leading-[1] tracking-[-0.03em] text-ink sm:text-5xl sm:leading-[0.95] sm:tracking-[-0.04em] lg:text-7xl">
+                Let&apos;s make the next part <em className="text-orange not-italic">matter.</em>
+              </h2>
+              <p className="mt-5 sm:mt-8 max-w-md text-xs sm:text-sm leading-relaxed text-ink/70 sm:leading-7">
+                Tell us what you are building. Our team will get back to you with the right next step.
+              </p>
+            </div>
+          </ScrollReveal>
 
-          <div>
-            {submitted ? (
-              <div className="flex min-h-[340px] flex-col items-start justify-center border border-orange bg-orange/10 p-6 sm:p-12 animate-fade-in">
-                <span className="grid size-12 place-items-center bg-orange text-ink">
-                  <Check className="size-5" aria-hidden="true" />
-                </span>
-                <h3 className="mt-6 sm:mt-8 font-display text-3xl sm:text-4xl text-ink">Message received.</h3>
-                <p className="mt-3 sm:mt-4 max-w-sm text-xs sm:text-sm leading-relaxed text-ink/75 sm:leading-7">
-                  Thank you for reaching out. Managing Director M. Radhakrishnan and our engineering team will review your specifications and get in touch with you shortly.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setSubmitted(false)}
-                  className="mt-6 sm:mt-8 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-orange underline underline-offset-4 transition-colors hover:text-ink"
-                >
-                  Send another message
-                </button>
-              </div>
-            ) : (
-              <form onSubmit={handleSubmit} className="flex flex-col gap-6 sm:gap-8">
-                <label className="block border-b-2 border-ink/20 py-4 sm:py-5 transition-colors focus-within:border-orange">
-                  <span className="mb-2 sm:mb-3 block text-[10px] font-bold uppercase tracking-[0.2em] text-ink/50">Your name</span>
-                  <input
-                    required
-                    name="name"
-                    type="text"
-                    className="w-full bg-transparent text-base sm:text-lg text-ink outline-none placeholder:text-ink/30"
-                    placeholder="Full name or company"
-                  />
-                </label>
-                <label className="block border-b-2 border-ink/20 py-4 sm:py-5 transition-colors focus-within:border-orange">
-                  <span className="mb-2 sm:mb-3 block text-[10px] font-bold uppercase tracking-[0.2em] text-ink/50">Work email</span>
-                  <input
-                    required
-                    name="email"
-                    type="email"
-                    className="w-full bg-transparent text-base sm:text-lg text-ink outline-none placeholder:text-ink/30"
-                    placeholder="you@company.com"
-                  />
-                </label>
-                <label className="block border-b-2 border-ink/20 py-4 sm:py-5 transition-colors focus-within:border-orange">
-                  <span className="mb-2 sm:mb-3 block text-[10px] font-bold uppercase tracking-[0.2em] text-ink/50">What are you making?</span>
-                  <textarea
-                    required
-                    name="message"
-                    rows={3}
-                    className="w-full resize-none bg-transparent text-base sm:text-lg text-ink outline-none placeholder:text-ink/30"
-                    placeholder="A little about your project, part specifications, or volume..."
-                  />
-                </label>
-                <button
-                  type="submit"
-                  className="group mt-4 sm:mt-6 inline-flex w-full sm:w-auto items-center justify-center gap-3 rounded-lg bg-ink px-7 py-4 text-[11px] font-bold uppercase tracking-[0.2em] text-cream shadow-sm transition-all duration-300 hover:bg-orange hover:text-ink hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:scale-98"
-                >
-                  Send enquiry
-                  <ArrowRight className="size-4 transition-transform duration-200 group-hover:translate-x-1" aria-hidden="true" />
-                </button>
-              </form>
-            )}
-          </div>
+          <ScrollReveal direction="right" delay={120}>
+            <div>
+              {submitted ? (
+                <div className="flex min-h-[340px] flex-col items-start justify-center border border-orange bg-orange/10 p-6 sm:p-12 animate-fade-in">
+                  <span className="grid size-12 place-items-center bg-orange text-ink">
+                    <Check className="size-5" aria-hidden="true" />
+                  </span>
+                  <h3 className="mt-6 sm:mt-8 font-display text-3xl sm:text-4xl text-ink">Message received.</h3>
+                  <p className="mt-3 sm:mt-4 max-w-sm text-xs sm:text-sm leading-relaxed text-ink/75 sm:leading-7">
+                    Thank you for reaching out. Managing Director M. Radhakrishnan and our engineering team will review your specifications and get in touch with you shortly.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setSubmitted(false)}
+                    className="mt-6 sm:mt-8 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-orange underline underline-offset-4 transition-colors hover:text-ink"
+                  >
+                    Send another message
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={handleSubmit} className="flex flex-col gap-6 sm:gap-8">
+                  <label className="block border-b-2 border-ink/20 py-4 sm:py-5 transition-colors focus-within:border-orange">
+                    <span className="mb-2 sm:mb-3 block text-[10px] font-bold uppercase tracking-[0.2em] text-ink/50">Your name</span>
+                    <input
+                      required
+                      name="name"
+                      type="text"
+                      className="w-full bg-transparent text-base sm:text-lg text-ink outline-none placeholder:text-ink/30"
+                      placeholder="Full name or company"
+                    />
+                  </label>
+                  <label className="block border-b-2 border-ink/20 py-4 sm:py-5 transition-colors focus-within:border-orange">
+                    <span className="mb-2 sm:mb-3 block text-[10px] font-bold uppercase tracking-[0.2em] text-ink/50">Work email</span>
+                    <input
+                      required
+                      name="email"
+                      type="email"
+                      className="w-full bg-transparent text-base sm:text-lg text-ink outline-none placeholder:text-ink/30"
+                      placeholder="you@company.com"
+                    />
+                  </label>
+                  <label className="block border-b-2 border-ink/20 py-4 sm:py-5 transition-colors focus-within:border-orange">
+                    <span className="mb-2 sm:mb-3 block text-[10px] font-bold uppercase tracking-[0.2em] text-ink/50">What are you making?</span>
+                    <textarea
+                      required
+                      name="message"
+                      rows={3}
+                      className="w-full resize-none bg-transparent text-base sm:text-lg text-ink outline-none placeholder:text-ink/30"
+                      placeholder="A little about your project, part specifications, or volume..."
+                    />
+                  </label>
+                  <button
+                    type="submit"
+                    className="hover-shine group mt-4 sm:mt-6 inline-flex w-full sm:w-auto items-center justify-center gap-3 rounded-lg bg-ink px-7 py-4 text-[11px] font-bold uppercase tracking-[0.2em] text-cream shadow-sm transition-all duration-300 hover:bg-orange hover:text-ink hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:scale-98"
+                  >
+                    Send enquiry
+                    <ArrowRight className="size-4 transition-transform duration-200 group-hover:translate-x-1" aria-hidden="true" />
+                  </button>
+                </form>
+              )}
+            </div>
+          </ScrollReveal>
         </div>
       </section>
 
       <footer className="bg-warmblack px-4 pt-14 pb-10 text-cream/70 sm:px-6 sm:pt-16 sm:pb-12 lg:px-12">
-        <div className="mx-auto max-w-[1280px]">
-          {/* Main Footer Grid */}
-          <div className="grid gap-10 pb-12 border-b border-cream/10 md:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1.2fr] lg:gap-16">
-            {/* Col 1: Brand & Navigation */}
-            <div className="flex flex-col justify-between">
-              <div>
-                <div className="inline-flex items-center rounded-md bg-white px-3 py-1.5 shadow-sm">
-                  <img
-                    src="/kalyani/logo_horizontal.png"
-                    alt="Kalyani Stampings Private Limited"
-                    className="h-8 w-auto object-contain"
-                  />
-                </div>
-                <p className="mt-5 max-w-sm text-xs leading-relaxed text-cream/60">
-                  Precision electrical laminations, motor stampings, and deep drawn metal components engineered with discipline since 2011.
-                </p>
-              </div>
-            </div>
-
-            {/* Col 2: Direct Contact / Leadership */}
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-orange">
-                Executive Leadership
-              </p>
-              <h3 className="mt-3 font-display text-xl text-cream">M. Radhakrishnan</h3>
-              <p className="text-xs font-semibold uppercase tracking-wider text-cream/50">Managing Director</p>
-
-              <div className="mt-5 sm:mt-6 space-y-3 sm:space-y-4">
-                <a
-                  href="tel:+919840349875"
-                  className="group flex min-h-[44px] items-center gap-3 text-xs text-cream/80 transition-colors hover:text-orange"
-                >
-                  <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-white/5 text-orange transition-all duration-200 group-hover:bg-orange group-hover:text-ink group-hover:scale-105">
-                    <Phone className="size-4" />
-                  </span>
-                  <div>
-                    <span className="block text-[9px] font-bold uppercase tracking-wider text-cream/40">Direct Mobile</span>
-                    <span className="font-semibold text-cream group-hover:text-orange">+91 98403 49875</span>
+        <ScrollReveal direction="up">
+          <div className="mx-auto max-w-[1280px]">
+            {/* Main Footer Grid */}
+            <div className="grid gap-10 pb-12 border-b border-cream/10 md:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1.2fr] lg:gap-16">
+              {/* Col 1: Brand & Navigation */}
+              <div className="flex flex-col justify-between">
+                <div>
+                  <div className="inline-flex items-center rounded-md bg-white px-3 py-1.5 shadow-sm">
+                    <img
+                      src="/kalyani/logo_horizontal.png"
+                      alt="Kalyani Stampings Private Limited"
+                      className="h-8 w-auto object-contain"
+                    />
                   </div>
-                </a>
-
-                <a
-                  href="mailto:ceo@kalyanistampings.com"
-                  className="group flex min-h-[44px] items-center gap-3 text-xs text-cream/80 transition-colors hover:text-orange"
-                >
-                  <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-white/5 text-orange transition-all duration-200 group-hover:bg-orange group-hover:text-ink group-hover:scale-105">
-                    <Mail className="size-4" />
-                  </span>
-                  <div>
-                    <span className="block text-[9px] font-bold uppercase tracking-wider text-cream/40">Direct Email</span>
-                    <span className="font-semibold text-cream group-hover:text-orange">ceo@kalyanistampings.com</span>
-                  </div>
-                </a>
-              </div>
-            </div>
-
-            {/* Col 3: Works & Plant Campus */}
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-orange">
-                Works &amp; Plant Campus
-              </p>
-              <p className="mt-3 text-xs font-semibold uppercase tracking-wider text-cream">
-                Kalyani Stampings Private Limited
-              </p>
-
-              <div className="mt-4 space-y-3 text-xs text-cream/70">
-                <div className="flex items-start gap-3">
-                  <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-white/5 text-cream/60">
-                    <MapPin className="size-4" />
-                  </span>
-                  <p className="leading-relaxed">
-                    2/99, Perinjambakkam Main Road,<br />
-                    Rajiv Gandhi 1st Main Road,<br />
-                    169, Koolangalcherry Village, Sriperumbudur Taluk,<br />
-                    Kanchipuram District – 601105,<br />
-                    Chennai, Tamil Nadu, India.
+                  <p className="mt-5 max-w-sm text-xs leading-relaxed text-cream/60">
+                    Precision electrical laminations, motor stampings, and deep drawn metal components engineered with discipline since 2011.
                   </p>
                 </div>
+              </div>
 
-                <div className="flex items-center gap-3">
-                  <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-white/5 text-cream/60">
-                    <Building2 className="size-4" />
-                  </span>
-                  <div>
-                    <span className="block text-[9px] font-bold uppercase tracking-wider text-cream/40">Plant Phone</span>
-                    <a href="tel:+919244926789" className="font-semibold text-cream transition-colors hover:text-orange">
-                      +91 92449 26789
-                    </a>
-                  </div>
+              {/* Col 2: Direct Contact / Leadership */}
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-orange">
+                  Executive Leadership
+                </p>
+                <h3 className="mt-3 font-display text-xl text-cream">M. Radhakrishnan</h3>
+                <p className="text-xs font-semibold uppercase tracking-wider text-cream/50">Managing Director</p>
+
+                <div className="mt-5 sm:mt-6 space-y-3 sm:space-y-4">
+                  <a
+                    href="tel:+919840349875"
+                    className="group flex min-h-[44px] items-center gap-3 text-xs text-cream/80 transition-colors hover:text-orange"
+                  >
+                    <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-white/5 text-orange transition-all duration-200 group-hover:bg-orange group-hover:text-ink group-hover:scale-105">
+                      <Phone className="size-4" />
+                    </span>
+                    <div>
+                      <span className="block text-[9px] font-bold uppercase tracking-wider text-cream/40">Direct Mobile</span>
+                      <span className="font-semibold text-cream group-hover:text-orange">+91 98403 49875</span>
+                    </div>
+                  </a>
+
+                  <a
+                    href="mailto:ceo@kalyanistampings.com"
+                    className="group flex min-h-[44px] items-center gap-3 text-xs text-cream/80 transition-colors hover:text-orange"
+                  >
+                    <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-white/5 text-orange transition-all duration-200 group-hover:bg-orange group-hover:text-ink group-hover:scale-105">
+                      <Mail className="size-4" />
+                    </span>
+                    <div>
+                      <span className="block text-[9px] font-bold uppercase tracking-wider text-cream/40">Direct Email</span>
+                      <span className="font-semibold text-cream group-hover:text-orange">ceo@kalyanistampings.com</span>
+                    </div>
+                  </a>
                 </div>
               </div>
 
-              <div className="mt-5">
-                <a
-                  href="https://www.google.com/maps/search/?api=1&query=Kalyani+Stampings+Private+Limited+Sriperumbudur+Kanchipuram"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-lg border border-cream/15 bg-white/5 px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-orange transition-all duration-200 hover:border-orange/50 hover:bg-orange/10 hover:text-cream hover:-translate-y-0.5 active:scale-95"
-                >
-                  View on Google Maps <ExternalLink className="size-3" />
+              {/* Col 3: Works & Plant Campus */}
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-orange">
+                  Works &amp; Plant Campus
+                </p>
+                <p className="mt-3 text-xs font-semibold uppercase tracking-wider text-cream">
+                  Kalyani Stampings Private Limited
+                </p>
+
+                <div className="mt-4 space-y-3 text-xs text-cream/70">
+                  <div className="flex items-start gap-3">
+                    <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-white/5 text-cream/60">
+                      <MapPin className="size-4" />
+                    </span>
+                    <p className="leading-relaxed">
+                      2/99, Perinjambakkam Main Road,<br />
+                      Rajiv Gandhi 1st Main Road,<br />
+                      169, Koolangalcherry Village, Sriperumbudur Taluk,<br />
+                      Kanchipuram District – 601105,<br />
+                      Chennai, Tamil Nadu, India.
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-white/5 text-cream/60">
+                      <Building2 className="size-4" />
+                    </span>
+                    <div>
+                      <span className="block text-[9px] font-bold uppercase tracking-wider text-cream/40">Plant Phone</span>
+                      <a href="tel:+919244926789" className="font-semibold text-cream transition-colors hover:text-orange">
+                        +91 92449 26789
+                      </a>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-5">
+                  <a
+                    href="https://www.google.com/maps/search/?api=1&query=Kalyani+Stampings+Private+Limited+Sriperumbudur+Kanchipuram"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-lg border border-cream/15 bg-white/5 px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-orange transition-all duration-200 hover:border-orange/50 hover:bg-orange/10 hover:text-cream hover:-translate-y-0.5 active:scale-95"
+                  >
+                    View on Google Maps <ExternalLink className="size-3" />
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom Bar */}
+            <div className="flex flex-col gap-4 pt-8 text-[11px] font-semibold uppercase tracking-[0.18em] text-cream/50 sm:flex-row sm:items-center sm:justify-between">
+              <p>© Kalyani Stampings Private Limited</p>
+              <div className="flex gap-6">
+                <a href="#home" className="group inline-flex items-center gap-1.5 transition-colors hover:text-orange">
+                  Back to top <span className="transition-transform duration-200 group-hover:-translate-y-0.5">↑</span>
                 </a>
               </div>
             </div>
           </div>
-
-          {/* Bottom Bar */}
-          <div className="flex flex-col gap-4 pt-8 text-[11px] font-semibold uppercase tracking-[0.18em] text-cream/50 sm:flex-row sm:items-center sm:justify-between">
-            <p>© Kalyani Stampings Private Limited</p>
-            <div className="flex gap-6">
-              <a href="#home" className="group inline-flex items-center gap-1.5 transition-colors hover:text-orange">
-                Back to top <span className="transition-transform duration-200 group-hover:-translate-y-0.5">↑</span>
-              </a>
-            </div>
-          </div>
-        </div>
+        </ScrollReveal>
       </footer>
     </main>
   )
